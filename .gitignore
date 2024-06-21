@@ -1,2 +1,2 @@
-.env
-node_modules
+app-service/backend/.env
+app-service/backend/node_modules
