@@ -15,6 +15,12 @@ const port = process.env.SERVER_PORT;
 app.use(bodyParser.json());
 app.use(cors());
 
+app.get('/api/ping', async (req, res) => {
+
+    res.json({'message': 'pong'});
+
+});
+
 app.post('/api/insert_deal', async (req, res) => {
     const postData = {
         data: [{
