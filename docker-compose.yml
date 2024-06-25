@@ -1,15 +1,19 @@
-version: "3.3"
+version: '3'
 
 services:
   app-service:
     build: ./app-service
     container_name: app-service
-    network_mode: host
-
+    
   nginx:
     build: ./nginx
     container_name: nginx
-    environment:
-      - SERVER_NAME=0.0.0.0
     restart: always
-    network_mode: host
+    environment:
+      - SERVER_NAME=zoho.automatedtaxcredits.com
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt/live/zoho.automatedtaxcredits.com/fullchain.pem:/etc/letsencrypt/live/zoho.automatedtaxcredits.com/fullchain.pem:ro
+      - /etc/letsencrypt/live/zoho.automatedtaxcredits.com/privkey.pem:/etc/letsencrypt/live/zoho.automatedtaxcredits.com/privkey.pem:ro
