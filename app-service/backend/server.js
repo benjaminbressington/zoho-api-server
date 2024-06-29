@@ -25,6 +25,107 @@ app.post('/api/insert_deal', async (req, res) => {
     const postData = {
         data: [{
             'Deal_Name': req.body.clientName,
+            'Stage': 'Prequal-Started',
+            'Email': req.body.email,
+            'First_Name': req.body.firstName,
+            'Last_Name': req.body.lastName,
+            'Phone': req.body.phone.toString(),
+            'ReferralSource': req.body.referralSource,
+            'ReferralURL': req.body.refereallURL,
+            'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
+            'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
+            'S1_Q3_Affected': req.body.s1Q3.toString()            
+        }],
+        trigger: ['approval', 'workflow', 'blueprint']
+    }
+
+    const dealsUrl = "https://www.zohoapis.com/crm/v2/Deals";
+    
+    const tokenData = {
+        refresh_token: REFRESH_TOKEN,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: GRANT_TYPE
+    };
+
+    try {
+        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        
+        const accessToken = response.data.access_token;
+        
+        try {
+            const response = await axios.post(dealsUrl, postData, {
+                headers: {
+                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            res.json(response.data);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/update_stage/:id', async (req, res) => {
+    const postData = {
+        data: [{
+            'Stage': req.body.stage            
+        }]
+    }
+    
+    const id = req.params.id;
+
+    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+    
+    const tokenData = {
+        refresh_token: REFRESH_TOKEN,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: GRANT_TYPE
+    };
+
+    try {
+        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        
+        const accessToken = response.data.access_token;
+        
+        try {
+            const response = await axios.put(dealsUrl, postData, {
+                headers: {
+                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            res.json(response.data);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.post('/api/update_record/:id', async (req,res) => {
+
+    const postData = {
+        data: [{
+            'Deal_Name': req.body.clientName,
             'City': req.body.city,
             'Claim_Dependent': req.body.claimDependent,
             'Effective_Date': req.body.effectiveDate.toString(),
@@ -86,11 +187,12 @@ app.post('/api/insert_deal', async (req, res) => {
             "S4_Q3_D8": req.body.S4_Q3_D8 || "",
             "S4_Q3_D9": req.body.S4_Q3_D9 || "",
             "S4_Q3_D10": req.body.S4_Q3_D10 || ""                    
-        }],
-        trigger: ['approval', 'workflow', 'blueprint']
+        }]
     }
 
-    const dealsUrl = "https://www.zohoapis.com/crm/v2/Deals";
+    const id = req.params.id;
+
+    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
     
     const tokenData = {
         refresh_token: REFRESH_TOKEN,
@@ -109,7 +211,7 @@ app.post('/api/insert_deal', async (req, res) => {
         const accessToken = response.data.access_token;
         
         try {
-            const response = await axios.post(dealsUrl, postData, {
+            const response = await axios.put(dealsUrl, postData, {
                 headers: {
                     'Authorization': `Zoho-oauthtoken ${accessToken}`,
                     'Content-Type': 'application/json'
@@ -124,6 +226,7 @@ app.post('/api/insert_deal', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+
 });
 
 app.listen(port, () => {
