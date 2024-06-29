@@ -125,6 +125,7 @@ app.post('/api/update_record/:id', async (req,res) => {
 
     const postData = {
         data: [{
+            'Stage': req.body.stage,
             'Deal_Name': req.body.clientName,
             'City': req.body.city,
             'Claim_Dependent': req.body.claimDependent,
