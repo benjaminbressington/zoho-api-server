@@ -230,5 +230,62 @@ app.post('/api/update_record/:id', async (req,res) => {
 
 });
 
+app.post('/api/update_existing/:id', async (req,res) => {
+
+    const postData = {
+        data: [{
+            'Deal_Name': req.body.clientName,
+            'Email': req.body.email,
+            'First_Name': req.body.firstName,
+            'Last_Name': req.body.lastName,
+            'Phone': req.body.phone.toString(),
+            'ReferralSource': req.body.referralSource,
+            'ReferralURL': req.body.refereallURL,
+            'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
+            'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
+            'S1_Q3_Affected': req.body.s1Q3.toString()                 
+        }]
+    }
+
+    const id = req.params.id;
+
+    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+    
+    const tokenData = {
+        refresh_token: REFRESH_TOKEN,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: GRANT_TYPE
+    };
+
+    try {
+        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        
+        const accessToken = response.data.access_token;
+        
+        try {
+            const response = await axios.put(dealsUrl, postData, {
+                headers: {
+                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            res.json(response.data);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+
+});
+
+
 app.listen(port, () => {
 });
