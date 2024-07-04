@@ -140,6 +140,7 @@ app.post('/api/update_record/:id', async (req,res) => {
             'Zip_Code': req.body.zipCode,
             'ReferralSource': req.body.referralSource,
             'ReferralURL': req.body.refereallURL,
+            'Tax_Filing_Status': req.body.filingStatus,
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
             'S1_Q3_Affected': req.body.s1Q3.toString(),
