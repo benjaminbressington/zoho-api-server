@@ -3,7 +3,6 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const Joi = require('joi');
 const winston = require('winston');
 
 const app = express();
@@ -36,24 +35,6 @@ app.get('/api/ping', (req, res) => {
     res.json({ 'message': 'pong' });
 });
 
-const validateDeal = (deal) => {
-    const schema = Joi.object({
-        clientName: Joi.string().required(),
-        email: Joi.string().email().required(),
-        firstName: Joi.string().required(),
-        lastName: Joi.string().required(),
-        phone: Joi.number().required(),
-        referralSource: Joi.string().required(),
-        refereallURL: Joi.string().required(),
-        s1Q1: Joi.boolean().required(),
-        s1Q2: Joi.boolean().required(),
-        s1Q3: Joi.boolean().required(),
-        estimated_value: Joi.string().required()
-    });
-
-    return schema.validate(deal);
-};
-
 const getToken = async () => {
     const tokenData = {
         refresh_token: REFRESH_TOKEN,
@@ -75,10 +56,6 @@ const getToken = async () => {
 
 app.post('/api/insert_deal', async (req, res, next) => {
     console.log(req.body);
-    const { error } = validateDeal(req.body);
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
 
     const postData = {
         data: [{
@@ -254,7 +231,6 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
         next(error);
     }
 });
-
 
 app.use((err, req, res, next) => {
     logger.error('An error occurred:', err);
