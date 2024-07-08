@@ -1,27 +1,85 @@
-require("dotenv").config();
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-
-const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const GRANT_TYPE = process.env.GRANT_TYPE
+const Joi = require('joi');
+const winston = require('winston');
 
 const app = express();
 const port = process.env.SERVER_PORT;
 
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const GRANT_TYPE = process.env.GRANT_TYPE;
+
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.json(),
+    transports: [
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'combined.log' })
+    ],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+        format: winston.format.simple()
+    }));
+}
+
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get('/api/ping', async (req, res) => {
-
-    res.json({'message': 'pong'});
-
+app.get('/api/ping', (req, res) => {
+    res.json({ 'message': 'pong' });
 });
 
-app.post('/api/insert_deal', async (req, res) => {
+const validateDeal = (deal) => {
+    const schema = Joi.object({
+        clientName: Joi.string().required(),
+        email: Joi.string().email().required(),
+        firstName: Joi.string().required(),
+        lastName: Joi.string().required(),
+        phone: Joi.number().required(),
+        referralSource: Joi.string().required(),
+        refereallURL: Joi.string().required(),
+        s1Q1: Joi.boolean().required(),
+        s1Q2: Joi.boolean().required(),
+        s1Q3: Joi.boolean().required(),
+        estimated_value: Joi.string().required()
+    });
+
+    return schema.validate(deal);
+};
+
+const getToken = async () => {
+    const tokenData = {
+        refresh_token: REFRESH_TOKEN,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: GRANT_TYPE
+    };
+
+    try {
+        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+        return response.data.access_token;
+    } catch (error) {
+        logger.error('Error getting access token:', error);
+        throw new Error('Unable to get access token');
+    }
+};
+
+app.post('/api/insert_deal', async (req, res, next) => {
+    console.log(req.body);
+    const { error } = validateDeal(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
+
     const postData = {
         data: [{
             'Deal_Name': req.body.clientName,
@@ -35,95 +93,49 @@ app.post('/api/insert_deal', async (req, res) => {
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
             'S1_Q3_Affected': req.body.s1Q3.toString(),
-            'Estimated_Value': req.body.estimated_value.toString()            
+            'Estimated_Value': req.body.estimated_value.toString()
         }],
         trigger: ['approval', 'workflow', 'blueprint']
-    }
+    };
 
     const dealsUrl = "https://www.zohoapis.com/crm/v2/Deals";
-    
-    const tokenData = {
-        refresh_token: REFRESH_TOKEN,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type: GRANT_TYPE
-    };
 
     try {
-        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+        const accessToken = await getToken();
+        const response = await axios.post(dealsUrl, postData, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
             }
         });
-        
-        const accessToken = response.data.access_token;
-        
-        try {
-            const response = await axios.post(dealsUrl, postData, {
-                headers: {
-                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            res.json(response.data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
+        res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 });
 
-app.post('/api/update_stage/:id', async (req, res) => {
-    const postData = {
-        data: [{
-            'Stage': req.body.stage            
-        }]
-    }
-    
+app.post('/api/update_stage/:id', async (req, res, next) => {
     const id = req.params.id;
+    const postData = { data: [{ 'Stage': req.body.stage }] };
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
-    
-    const tokenData = {
-        refresh_token: REFRESH_TOKEN,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type: GRANT_TYPE
-    };
 
     try {
-        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+        const accessToken = await getToken();
+        const response = await axios.put(dealsUrl, postData, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
             }
         });
-        
-        const accessToken = response.data.access_token;
-        
-        try {
-            const response = await axios.put(dealsUrl, postData, {
-                headers: {
-                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            res.json(response.data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
+        res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 });
 
-
-app.post('/api/update_record/:id', async (req,res) => {
-
+app.post('/api/update_record/:id', async (req, res, next) => {
+    const id = req.params.id;
     const postData = {
         data: [{
             'Stage': req.body.stage,
@@ -169,7 +181,7 @@ app.post('/api/update_record/:id', async (req,res) => {
             "S3_Q2_D7": req.body.S3_Q2_D7 || "",
             "S3_Q2_D8": req.body.S3_Q2_D8 || "",
             "S3_Q2_D9": req.body.S3_Q2_D9 || "",
-            "S3_Q2_D10": req.body.S3_Q2_D10 || "",        
+            "S3_Q2_D10": req.body.S3_Q2_D10 || "",
             "S4_Q2_D1": req.body.S4_Q2_D1 || "",
             "S4_Q2_D2": req.body.S4_Q2_D2 || "",
             "S4_Q2_D3": req.body.S4_Q2_D3 || "",
@@ -189,51 +201,28 @@ app.post('/api/update_record/:id', async (req,res) => {
             "S4_Q3_D7": req.body.S4_Q3_D7 || "",
             "S4_Q3_D8": req.body.S4_Q3_D8 || "",
             "S4_Q3_D9": req.body.S4_Q3_D9 || "",
-            "S4_Q3_D10": req.body.S4_Q3_D10 || ""                    
+            "S4_Q3_D10": req.body.S4_Q3_D10 || ""
         }]
-    }
-
-    const id = req.params.id;
-
-    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
-    
-    const tokenData = {
-        refresh_token: REFRESH_TOKEN,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type: GRANT_TYPE
     };
 
+    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+
     try {
-        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+        const accessToken = await getToken();
+        const response = await axios.put(dealsUrl, postData, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
             }
         });
-        
-        const accessToken = response.data.access_token;
-        
-        try {
-            const response = await axios.put(dealsUrl, postData, {
-                headers: {
-                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            res.json(response.data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
+        res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
-
 });
 
-app.post('/api/update_existing/:id', async (req,res) => {
-
+app.post('/api/update_existing/:id', async (req, res, next) => {
+    const id = req.params.id;
     const postData = {
         data: [{
             'Deal_Name': req.body.clientName,
@@ -246,49 +235,32 @@ app.post('/api/update_existing/:id', async (req,res) => {
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
             'S1_Q3_Affected': req.body.s1Q3.toString(),
-            'Estimated_Value': req.body.estimated_value.toString()                  
+            'Estimated_Value': req.body.estimated_value.toString()
         }]
-    }
-
-    const id = req.params.id;
-
-    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
-    
-    const tokenData = {
-        refresh_token: REFRESH_TOKEN,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type: GRANT_TYPE
     };
 
+    const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+
     try {
-        const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
+        const accessToken = await getToken();
+        const response = await axios.put(dealsUrl, postData, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
             }
         });
-        
-        const accessToken = response.data.access_token;
-        
-        try {
-            const response = await axios.put(dealsUrl, postData, {
-                headers: {
-                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            res.json(response.data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
+        res.json(response.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
-
 });
 
 
+app.use((err, req, res, next) => {
+    logger.error('An error occurred:', err);
+    res.status(500).json({ error: 'An internal server error occurred. Please try again later.' });
+});
+
 app.listen(port, () => {
+    logger.info(`Server running on port ${port}`);
 });
