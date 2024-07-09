@@ -64,13 +64,15 @@ app.post('/api/insert_deal', async (req, res, next) => {
             'Email': req.body.email,
             'First_Name': req.body.firstName,
             'Last_Name': req.body.lastName,
-            'Phone': Number(req.body.phone.toString()),
+            'Phone': req.body.phone.toString(),
+            'Mobile': req.body.phone.toString(),
             'Lead_Source': req.body.referralSource,
             'ReferralURL': req.body.refereallURL,
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
             'S1_Q3_Affected': req.body.s1Q3.toString(),
-            'Estimated_Value': req.body.estimated_value.toString()
+            'Estimated_Value': req.body.estimated_value.toString(),
+            'Pick_List_1': 'Ankur List'
         }],
         trigger: ['approval', 'workflow', 'blueprint']
     };
@@ -85,6 +87,7 @@ app.post('/api/insert_deal', async (req, res, next) => {
                 'Content-Type': 'application/json'
             }
         });
+        console.log(response.data.data);
         res.json(response.data);
     } catch (error) {
         next(error);
@@ -124,6 +127,7 @@ app.post('/api/update_record/:id', async (req, res, next) => {
             'First_Name': req.body.firstName,
             'Last_Name': req.body.lastName,
             'Phone': req.body.phone.toString(),
+            'Mobile': req.body.phone.toString(),
             'State': req.body.state,
             'Street_Address': req.body.streetAddress,
             'Zip_Code': req.body.zipCode,
@@ -207,6 +211,7 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             'First_Name': req.body.firstName,
             'Last_Name': req.body.lastName,
             'Phone': req.body.phone.toString(),
+            'Mobile': req.body.phone.toString(),
             'Lead_Source': req.body.referralSource,
             'ReferralURL': req.body.refereallURL,
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
