@@ -64,7 +64,7 @@ app.post('/api/insert_deal', async (req, res, next) => {
             'Email': req.body.email,
             'First_Name': req.body.firstName,
             'Last_Name': req.body.lastName,
-            'Phone': req.body.phone.toString(),
+            'Phone': Number(req.body.phone.toString()),
             'Lead_Source': req.body.referralSource,
             'ReferralURL': req.body.refereallURL,
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
