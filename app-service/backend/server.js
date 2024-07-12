@@ -217,8 +217,7 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             'ReferralURL': req.body.refereallURL || "",
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
-            'S1_Q3_Affected': req.body.s1Q3.toString(),
-            'Estimated_Value': req.body.estimated_value.toString()
+            'S1_Q3_Affected': req.body.s1Q3.toString()
         }]
     };
 
