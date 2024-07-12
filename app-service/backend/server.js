@@ -66,7 +66,7 @@ app.post('/api/insert_deal', async (req, res, next) => {
             'Last_Name': req.body.lastName,
             'Phone': req.body.phone.toString(),
             'Mobile': req.body.phone.toString(),
-            'Lead_Source': req.body.referralSource,
+            'Lead_Source': req.body.referralSource || "1111",
             'ReferralURL': req.body.refereallURL,
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
@@ -131,7 +131,7 @@ app.post('/api/update_record/:id', async (req, res, next) => {
             'State': req.body.state,
             'Street_Address': req.body.streetAddress,
             'Zip_Code': req.body.zipCode,
-            'Lead_Source': req.body.referralSource,
+            'Lead_Source': req.body.referralSource || "1111",
             'ReferralURL': req.body.refereallURL,
             'Tax_Filing_Status': req.body.filingStatus || "Single",
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
@@ -204,6 +204,7 @@ app.post('/api/update_record/:id', async (req, res, next) => {
 
 app.post('/api/update_existing/:id', async (req, res, next) => {
     const id = req.params.id;
+    console.log(req.body)
     const postData = {
         data: [{
             'Deal_Name': req.body.clientName,
@@ -212,7 +213,7 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             'Last_Name': req.body.lastName,
             'Phone': req.body.phone.toString(),
             'Mobile': req.body.phone.toString(),
-            'Lead_Source': req.body.referralSource,
+            'Lead_Source': req.body.referralSource || "1111",
             'ReferralURL': req.body.refereallURL,
             'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
             'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
