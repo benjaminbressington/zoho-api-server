@@ -22,7 +22,8 @@ const logger = winston.createLogger({
     ],
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production')
+{
     logger.add(new winston.transports.Console({
         format: winston.format.simple()
     }));
@@ -31,11 +32,13 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get('/api/ping', (req, res) => {
+app.get('/api/ping', (req, res) =>
+{
     res.json({ 'message': 'pong' });
 });
 
-const getToken = async () => {
+const getToken = async () =>
+{
     const tokenData = {
         refresh_token: REFRESH_TOKEN,
         client_id: CLIENT_ID,
@@ -43,19 +46,36 @@ const getToken = async () => {
         grant_type: GRANT_TYPE
     };
 
-    try {
+    try
+    {
         const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', new URLSearchParams(tokenData), {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return response.data.access_token;
-    } catch (error) {
+    } catch (error)
+    {
         logger.error('Error getting access token:', error);
         throw new Error('Unable to get access token');
     }
 };
 
-app.post('/api/insert_deal', async (req, res, next) => {
+app.post('/api/insert_deal', async (req, res, next) =>
+{
     console.log(req.body);
+
+    const body = req.body;
+
+    const requiredKeys = ['clientName', 'email', 'firstName', 'lastName', 'phone', 's1Q1', 's1Q2', 's1Q3', 'estimated_value'];
+
+    for (const key of requiredKeys)
+    {
+        if (!body[key])
+        {
+            const error = `Field ${key} is required!`;
+            console.log('Error: ', error);
+            return res.status(400).json({ message: error });
+        }
+    }
 
     const postData = {
         data: [{
@@ -80,7 +100,8 @@ app.post('/api/insert_deal', async (req, res, next) => {
 
     const dealsUrl = "https://www.zohoapis.com/crm/v2/Deals";
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.post(dealsUrl, postData, {
             headers: {
@@ -90,18 +111,21 @@ app.post('/api/insert_deal', async (req, res, next) => {
         });
         console.log(response.data.data);
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
 
-app.post('/api/update_stage/:id', async (req, res, next) => {
+app.post('/api/update_stage/:id', async (req, res, next) =>
+{
     const id = req.params.id;
     const postData = { data: [{ 'Stage': req.body.stage }] };
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -110,12 +134,14 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
             }
         });
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
 
-app.post('/api/update_record/:id', async (req, res, next) => {
+app.post('/api/update_record/:id', async (req, res, next) =>
+{
     const id = req.params.id;
     const postData = {
         data: [{
@@ -189,7 +215,8 @@ app.post('/api/update_record/:id', async (req, res, next) => {
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -198,14 +225,16 @@ app.post('/api/update_record/:id', async (req, res, next) => {
             }
         });
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
 
-app.post('/api/update_existing/:id', async (req, res, next) => {
+app.post('/api/update_existing/:id', async (req, res, next) =>
+{
     const id = req.params.id;
-    console.log(req.body)
+    console.log(req.body);
     const postData = {
         data: [{
             'Deal_Name': req.body.clientName,
@@ -225,7 +254,8 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -234,16 +264,19 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             }
         });
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, next) =>
+{
     logger.error('An error occurred:', err);
     res.status(500).json({ error: 'An internal server error occurred. Please try again later.' });
 });
 
-app.listen(port, () => {
+app.listen(port, () =>
+{
     logger.info(`Server running on port ${port}`);
 });
