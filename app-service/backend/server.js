@@ -117,15 +117,19 @@ app.post('/api/insert_deal', async (req, res, next) =>
     }
 });
 
-app.post('/api/update_stage/:id', async (req, res, next) =>
-{
+app.post('/api/update_stage/:id', async (req, res, next) => {
     const id = req.params.id;
-    const postData = { data: [{ 'Stage': req.body.stage }] };
 
+    if (!req.body.stage) {
+        const error = 'Field stage is required!';
+        console.log('Error: ', error);
+        return res.status(400).json({ message: error });
+    }
+
+    const postData = { data: [{ 'Stage': req.body.stage }] };
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try
-    {
+    try {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -134,15 +138,35 @@ app.post('/api/update_stage/:id', async (req, res, next) =>
             }
         });
         res.json(response.data);
-    } catch (error)
-    {
+    } catch (error) {
         next(error);
     }
 });
 
-app.post('/api/update_record/:id', async (req, res, next) =>
-{
+app.post('/api/update_record/:id', async (req, res, next) => {
     const id = req.params.id;
+    const requiredFields = [
+        'stage', 'clientName', 'city', 'claimDependent', 'effectiveDate', 'email', 
+        'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode', 
+        'referralSource', 'refereallURL', 'filingStatus', 's1Q1', 's1Q2', 's1Q3', 
+        's3Q1', 's3Q2', 's4Q1', 's4Q2', 's4Q3', 's5Q1', 'S3_Q1_D1', 'S3_Q1_D2', 
+        'S3_Q1_D3', 'S3_Q1_D4', 'S3_Q1_D5', 'S3_Q1_D6', 'S3_Q1_D7', 'S3_Q1_D8', 
+        'S3_Q1_D9', 'S3_Q1_D10', 'S3_Q2_D1', 'S3_Q2_D2', 'S3_Q2_D3', 'S3_Q2_D4', 
+        'S3_Q2_D5', 'S3_Q2_D6', 'S3_Q2_D7', 'S3_Q2_D8', 'S3_Q2_D9', 'S3_Q2_D10', 
+        'S4_Q2_D1', 'S4_Q2_D2', 'S4_Q2_D3', 'S4_Q2_D4', 'S4_Q2_D5', 'S4_Q2_D6', 
+        'S4_Q2_D7', 'S4_Q2_D8', 'S4_Q2_D9', 'S4_Q2_D10', 'S4_Q3_D1', 'S4_Q3_D2', 
+        'S4_Q3_D3', 'S4_Q3_D4', 'S4_Q3_D5', 'S4_Q3_D6', 'S4_Q3_D7', 'S4_Q3_D8', 
+        'S4_Q3_D9', 'S4_Q3_D10'
+    ];
+
+    for (const key of requiredFields) {
+        if (!req.body[key]) {
+            const error = `Field ${key} is required!`;
+            console.log('Error: ', error);
+            return res.status(400).json({ message: error });
+        }
+    }
+
     const postData = {
         data: [{
             'Stage': req.body.stage,
@@ -215,8 +239,7 @@ app.post('/api/update_record/:id', async (req, res, next) =>
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try
-    {
+    try {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -225,16 +248,29 @@ app.post('/api/update_record/:id', async (req, res, next) =>
             }
         });
         res.json(response.data);
-    } catch (error)
-    {
+    } catch (error) {
         next(error);
     }
 });
 
-app.post('/api/update_existing/:id', async (req, res, next) =>
-{
+
+app.post('/api/update_existing/:id', async (req, res, next) => {
     const id = req.params.id;
     console.log(req.body);
+
+    const requiredFields = [
+        'clientName', 'email', 'firstName', 'lastName', 'phone', 
+        'referralSource', 'refereallURL', 's1Q1', 's1Q2', 's1Q3', 'resume_url'
+    ];
+
+    for (const key of requiredFields) {
+        if (!req.body[key]) {
+            const error = `Field ${key} is required!`;
+            console.log('Error: ', error);
+            return res.status(400).json({ message: error });
+        }
+    }
+
     const postData = {
         data: [{
             'Deal_Name': req.body.clientName,
@@ -254,8 +290,7 @@ app.post('/api/update_existing/:id', async (req, res, next) =>
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try
-    {
+    try {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -264,11 +299,11 @@ app.post('/api/update_existing/:id', async (req, res, next) =>
             }
         });
         res.json(response.data);
-    } catch (error)
-    {
+    } catch (error) {
         next(error);
     }
 });
+
 
 app.use((err, req, res, next) =>
 {
