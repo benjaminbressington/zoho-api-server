@@ -147,8 +147,7 @@ app.post('/api/update_record/:id', async (req, res, next) => {
     const id = req.params.id;
     const requiredFields = [
         'stage', 'clientName', 'city', 'effectiveDate', 'email', 
-        'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode', 
-        'filingStatus'
+        'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode'
     ];
 
     for (const key of requiredFields) {
