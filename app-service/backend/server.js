@@ -148,7 +148,7 @@ app.post('/api/update_record/:id', async (req, res, next) => {
     const requiredFields = [
         'stage', 'clientName', 'city', 'claimDependent', 'effectiveDate', 'email', 
         'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode', 
-        'referralSource', 'refereallURL', 'filingStatus', 's1Q1', 's1Q2', 's1Q3', 
+        'referralSource', 'filingStatus', 's1Q1', 's1Q2', 's1Q3', 
         's3Q1', 's3Q2', 's4Q1', 's4Q2', 's4Q3', 's5Q1', 'S3_Q1_D1', 'S3_Q1_D2', 
         'S3_Q1_D3', 'S3_Q1_D4', 'S3_Q1_D5', 'S3_Q1_D6', 'S3_Q1_D7', 'S3_Q1_D8', 
         'S3_Q1_D9', 'S3_Q1_D10', 'S3_Q2_D1', 'S3_Q2_D2', 'S3_Q2_D3', 'S3_Q2_D4', 
