@@ -149,6 +149,7 @@ app.post('/api/update_stage/:id', async (req, res, next) =>
 
 app.post('/api/update_record/:id', async (req, res, next) =>
 {
+    console.log(req.body);
     const id = req.params.id;
     const requiredFields = [
         'stage', 'clientName', 'city', 'effectiveDate', 'email',
