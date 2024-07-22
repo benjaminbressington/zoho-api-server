@@ -65,7 +65,7 @@ app.post('/api/insert_deal', async (req, res, next) =>
 
     const body = req.body;
 
-    const requiredKeys = ['clientName', 'email', 'firstName', 'lastName', 'phone', 's1Q1', 's1Q2', 's1Q3', 'estimated_value'];
+    const requiredKeys = ['clientName', 'email', 'firstName', 'lastName', 'phone', 'estimated_value'];
 
     for (const key of requiredKeys)
     {
@@ -88,9 +88,9 @@ app.post('/api/insert_deal', async (req, res, next) =>
             'Mobile': req.body.phone.toString(),
             'Lead_Source': req.body.referralSource || "1111",
             'ReferralURL': req.body.refereallURL || "",
-            'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
-            'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
-            'S1_Q3_Affected': req.body.s1Q3.toString(),
+            'S1_Q1_Selfemployed': req.body.s1Q1?.toString(),
+            'S1_Q2_Filed1040_tax': req.body.s1Q2?.toString(),
+            'S1_Q3_Affected': req.body.s1Q3?.toString(),
             'Estimated_Value': req.body.estimated_value ? req.body.estimated_value.toString() : '',
             'Pick_List_1': 'Ankur List',
             'Resume_URL': req.body.resume_url || 'https://app.automatedtaxcredits.com/estimator'
@@ -117,10 +117,12 @@ app.post('/api/insert_deal', async (req, res, next) =>
     }
 });
 
-app.post('/api/update_stage/:id', async (req, res, next) => {
+app.post('/api/update_stage/:id', async (req, res, next) =>
+{
     const id = req.params.id;
 
-    if (!req.body.stage) {
+    if (!req.body.stage)
+    {
         const error = 'Field stage is required!';
         console.log('Error: ', error);
         return res.status(400).json({ message: error });
@@ -129,7 +131,8 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
     const postData = { data: [{ 'Stage': req.body.stage }] };
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -138,20 +141,24 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
             }
         });
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
 
-app.post('/api/update_record/:id', async (req, res, next) => {
+app.post('/api/update_record/:id', async (req, res, next) =>
+{
     const id = req.params.id;
     const requiredFields = [
-        'stage', 'clientName', 'city', 'effectiveDate', 'email', 
+        'stage', 'clientName', 'city', 'effectiveDate', 'email',
         'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode'
     ];
 
-    for (const key of requiredFields) {
-        if (!req.body[key]) {
+    for (const key of requiredFields)
+    {
+        if (!req.body[key])
+        {
             const error = `Field ${key} is required!`;
             console.log('Error: ', error);
             return res.status(400).json({ message: error });
@@ -176,15 +183,15 @@ app.post('/api/update_record/:id', async (req, res, next) => {
             'Lead_Source': req.body.referralSource || "1111",
             'ReferralURL': req.body.refereallURL || "",
             'Tax_Filing_Status': req.body.filingStatus || "Single",
-            'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
-            'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
-            'S1_Q3_Affected': req.body.s1Q3.toString(),
-            'S3_Q1': req.body.s3Q1.toString(),
-            'S3_Q2': req.body.s3Q2.toString(),
-            'S4_Q1': req.body.s4Q1.toString(),
-            'S4_Q2': req.body.s4Q2.toString(),
-            'S4_Q3': req.body.s4Q3.toString(),
-            'S5_Q1': req.body.s5Q1.toString(),
+            'S1_Q1_Selfemployed': req.body.s1Q1?.toString(),
+            'S1_Q2_Filed1040_tax': req.body.s1Q2?.toString(),
+            'S1_Q3_Affected': req.body.s1Q3?.toString(),
+            'S3_Q1': req.body.s3Q1?.toString(),
+            'S3_Q2': req.body.s3Q2?.toString(),
+            'S4_Q1': req.body.s4Q1?.toString(),
+            'S4_Q2': req.body.s4Q2?.toString(),
+            'S4_Q3': req.body.s4Q3?.toString(),
+            'S5_Q1': req.body.s5Q1?.toString(),
             "S3_Q1_D1": req.body.S3_Q1_D1 || "",
             "S3_Q1_D2": req.body.S3_Q1_D2 || "",
             "S3_Q1_D3": req.body.S3_Q1_D3 || "",
@@ -230,7 +237,8 @@ app.post('/api/update_record/:id', async (req, res, next) => {
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -239,23 +247,27 @@ app.post('/api/update_record/:id', async (req, res, next) => {
             }
         });
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
 
 
-app.post('/api/update_existing/:id', async (req, res, next) => {
+app.post('/api/update_existing/:id', async (req, res, next) =>
+{
     const id = req.params.id;
     console.log(req.body);
 
     const requiredFields = [
-        'clientName', 'email', 'firstName', 'lastName', 'phone', 
-        'referralSource', 'refereallURL', 's1Q1', 's1Q2', 's1Q3', 'resume_url'
+        'clientName', 'email', 'firstName', 'lastName', 'phone',
+        'refereallURL', 'resume_url'
     ];
 
-    for (const key of requiredFields) {
-        if (!req.body[key]) {
+    for (const key of requiredFields)
+    {
+        if (!req.body[key])
+        {
             const error = `Field ${key} is required!`;
             console.log('Error: ', error);
             return res.status(400).json({ message: error });
@@ -272,16 +284,17 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             'Mobile': req.body.phone.toString(),
             'Lead_Source': req.body.referralSource || "1111",
             'ReferralURL': req.body.refereallURL || "",
-            'S1_Q1_Selfemployed': req.body.s1Q1.toString(),
-            'S1_Q2_Filed1040_tax': req.body.s1Q2.toString(),
-            'S1_Q3_Affected': req.body.s1Q3.toString(),
+            'S1_Q1_Selfemployed': req.body.s1Q1?.toString(),
+            'S1_Q2_Filed1040_tax': req.body.s1Q2?.toString(),
+            'S1_Q3_Affected': req.body.s1Q3?.toString(),
             'Resume_URL': req.body.resume_url || 'https://app.automatedtaxcredits.com/estimator'
         }]
     };
 
     const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
-    try {
+    try
+    {
         const accessToken = await getToken();
         const response = await axios.put(dealsUrl, postData, {
             headers: {
@@ -290,7 +303,8 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             }
         });
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         next(error);
     }
 });
