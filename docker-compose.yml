@@ -4,6 +4,7 @@ services:
   app-service:
     build: ./app-service
     container_name: app-service
+    restart: always
     
   nginx:
     build: ./nginx
