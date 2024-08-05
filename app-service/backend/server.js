@@ -141,6 +141,34 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
     }
 });
 
+app.post('/api/update_amount/:id', async (req, res, next) => {
+    try {
+        const id = req.params.id;
+
+        if (!req.body.amount) {
+            const error = 'Field amount is required!';
+            console.log('Error: ', error);
+            return res.status(400).json({ message: error });
+        }
+
+        const postData = { data: [{ 'Amount': req.body.amount || '' }] };
+        const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+
+        const accessToken = await getToken();
+        const response = await axios.put(dealsUrl, postData, {
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error:', error.message || error);
+        res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
 app.post('/api/update_record/:id', async (req, res, next) => {
     try {
         console.log(req.body);
