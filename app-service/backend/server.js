@@ -145,13 +145,18 @@ app.post('/api/update_amount/:id', async (req, res, next) => {
     try {
         const id = req.params.id;
 
-        if (!req.body.amount || !req.body.irs_bal) {
-            const error = 'Field amount or irs_bal is missing!';
-            console.log('Error: ', error);
-            return res.status(400).json({ message: error });
+        const body = req.body;
+        const requiredKeys = ['amount', 'irs_bal', 'pdf_21', 'calculation_date'];
+
+        for (const key of requiredKeys) {
+            if (!body[key]) {
+                const error = `Field ${key} is required!`;
+                console.log('Error: ', error);
+                return res.status(400).json({ message: error });
+            }
         }
 
-        const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || 0 }] };
+        const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || 0 }, { 'Calculated_PDF': req.body.pdf_21 || '' }, { 'Calculation_Date': req.body.calculation_date || '' }] };
         const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
         const accessToken = await getToken();
