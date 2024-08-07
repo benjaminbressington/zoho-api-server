@@ -156,7 +156,7 @@ app.post('/api/update_amount/:id', async (req, res, next) => {
             }
         }
 
-        const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || 0, 'PDF_21': req.body.pdf_21 || 0, 'Calculation_Date': req.body.calculation_date}] };
+        const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || 0, 'Calculated_PDF': req.body.pdf_21 || 0, 'Calculation_Date': req.body.calculation_date}] };
         const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
         const accessToken = await getToken();
