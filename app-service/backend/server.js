@@ -146,15 +146,7 @@ app.post('/api/update_amount/:id', async (req, res, next) => {
         const id = req.params.id;
 
         const body = req.body;
-        const requiredKeys = ['amount', 'irs_bal', 'pdf_21', 'calculation_date'];
-
-        for (const key of requiredKeys) {
-            if (!body[key]) {
-                const error = `Field ${key} is required!`;
-                console.log('Error: ', error);
-                return res.status(400).json({ message: error });
-            }
-        }
+        console.log(body);
 
         const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || 0, 'Calculated_PDF': req.body.pdf_21 || 0, 'Calculation_Date': req.body.calculation_date}] };
         const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
