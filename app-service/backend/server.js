@@ -166,96 +166,14 @@ app.post('/api/update_amount/:id', async (req, res, next) => {
     }
 });
 
-app.post('/api/update_record/:id', async (req, res, next) => {
+app.get('/api/get_record/:id', async (req, res, next) => {
     try {
         console.log(req.body);
         const id = req.params.id;
-        const requiredFields = [
-            'stage', 'clientName', 'city', 'effectiveDate', 'email',
-            'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode'
-        ];
-
-        for (const key of requiredFields) {
-            if (!req.body[key]) {
-                const error = `Field ${key} is required!`;
-                console.log('Error: ', error);
-                return res.status(400).json({ message: error });
-            }
-        }
-
-        const postData = {
-            data: [{
-                'Stage': req.body.stage || '',
-                'Deal_Name': req.body.clientName || '',
-                'City': req.body.city || '',
-                'Claim_Dependent': req.body.claimDependent || '',
-                'Effective_Date': req.body.effectiveDate?.toString() || '',
-                'Email': req.body.email || '',
-                'First_Name': req.body.firstName || '',
-                'Last_Name': req.body.lastName || '',
-                'Phone': req.body.phone?.toString() || '',
-                'Mobile': req.body.phone?.toString() || '',
-                'State': req.body.state || '',
-                'Street_Address': req.body.streetAddress || '',
-                'Zip_Code': req.body.zipCode || '',
-                'Lead_Source': req.body.referralSource || "1111",
-                'ReferralURL': req.body.referralURL || '',
-                'Tax_Filing_Status': req.body.filingStatus || "Single",
-                'S1_Q1_Selfemployed': req.body.s1Q1?.toString() || '',
-                'S1_Q2_Filed1040_tax': req.body.s1Q2?.toString() || '',
-                'S1_Q3_Affected': req.body.s1Q3?.toString() || '',
-                'S3_Q1': req.body.s3Q1?.toString() || '',
-                'S3_Q2': req.body.s3Q2?.toString() || '',
-                'S4_Q1': req.body.s4Q1?.toString() || '',
-                'S4_Q2': req.body.s4Q2?.toString() || '',
-                'S4_Q3': req.body.s4Q3?.toString() || '',
-                'S5_Q1': req.body.s5Q1?.toString() || '',
-                "S3_Q1_D1": req.body.S3_Q1_D1 || '',
-                "S3_Q1_D2": req.body.S3_Q1_D2 || '',
-                "S3_Q1_D3": req.body.S3_Q1_D3 || '',
-                "S3_Q1_D4": req.body.S3_Q1_D4 || '',
-                "S3_Q1_D5": req.body.S3_Q1_D5 || '',
-                "S3_Q1_D6": req.body.S3_Q1_D6 || '',
-                "S3_Q1_D7": req.body.S3_Q1_D7 || '',
-                "S3_Q1_D8": req.body.S3_Q1_D8 || '',
-                "S3_Q1_D9": req.body.S3_Q1_D9 || '',
-                "S3_Q1_D10": req.body.S3_Q1_D10 || '',
-                "S3_Q2_D1": req.body.S3_Q2_D1 || '',
-                "S3_Q2_D2": req.body.S3_Q2_D2 || '',
-                "S3_Q2_D3": req.body.S3_Q2_D3 || '',
-                "S3_Q2_D4": req.body.S3_Q2_D4 || '',
-                "S3_Q2_D5": req.body.S3_Q2_D5 || '',
-                "S3_Q2_D6": req.body.S3_Q2_D6 || '',
-                "S3_Q2_D7": req.body.S3_Q2_D7 || '',
-                "S3_Q2_D8": req.body.S3_Q2_D8 || '',
-                "S3_Q2_D9": req.body.S3_Q2_D9 || '',
-                "S3_Q2_D10": req.body.S3_Q2_D10 || '',
-                "S4_Q2_D1": req.body.S4_Q2_D1 || '',
-                "S4_Q2_D2": req.body.S4_Q2_D2 || '',
-                "S4_Q2_D3": req.body.S4_Q2_D3 || '',
-                "S4_Q2_D4": req.body.S4_Q2_D4 || '',
-                "S4_Q2_D5": req.body.S4_Q2_D5 || '',
-                "S4_Q2_D6": req.body.S4_Q2_D6 || '',
-                "S4_Q2_D7": req.body.S4_Q2_D7 || '',
-                "S4_Q2_D8": req.body.S4_Q2_D8 || '',
-                "S4_Q2_D9": req.body.S4_Q2_D9 || '',
-                "S4_Q2_D10": req.body.S4_Q2_D10 || '',
-                "S4_Q3_D1": req.body.S4_Q3_D1 || '',
-                "S4_Q3_D2": req.body.S4_Q3_D2 || '',
-                "S4_Q3_D3": req.body.S4_Q3_D3 || '',
-                "S4_Q3_D4": req.body.S4_Q3_D4 || '',
-                "S4_Q3_D5": req.body.S4_Q3_D5 || '',
-                "S4_Q3_D6": req.body.S4_Q3_D6 || '',
-                "S4_Q3_D7": req.body.S4_Q3_D7 || '',
-                "S4_Q3_D8": req.body.S4_Q3_D8 || '',
-                "S4_Q3_D9": req.body.S4_Q3_D9 || '',
-                "S4_Q3_D10": req.body.S4_Q3_D10 || ''
-            }]
-        };
 
         const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
         const accessToken = await getToken();
-        const response = await axios.put(dealsUrl, postData, {
+        const response = await axios.get(dealsUrl, {
             headers: {
                 'Authorization': `Zoho-oauthtoken ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -268,6 +186,8 @@ app.post('/api/update_record/:id', async (req, res, next) => {
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
+
+
 
 
 app.post('/api/update_existing/:id', async (req, res, next) => {
