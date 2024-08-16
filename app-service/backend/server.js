@@ -272,6 +272,34 @@ app.post('/api/update_filing_status/:id', async (req, res, next) => {
     }
 });
 
+app.post('/api/update_ssn/:id', async (req, res, next) => {
+    try {
+        const id = req.params.id;
+
+        if (!req.body.ssn) {
+            const error = 'Field ssn is required!';
+            console.log('Error: ', error);
+            return res.status(400).json({ message: error });
+        }
+
+        const postData = { data: [{ 'SSN': req.body.ssn || '' }] };
+        const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+
+        const accessToken = await getToken();
+        const response = await axios.put(dealsUrl, postData, {
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error:', error.message || error);
+        res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
 app.post('/api/update_amount/:id', async (req, res, next) => {
     try {
         const id = req.params.id;
