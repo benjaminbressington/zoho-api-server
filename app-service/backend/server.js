@@ -4,6 +4,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const winston = require('winston');
+const { loadProgress, saveProgress} = require('./util')
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -399,7 +400,29 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
     }
 });
 
+app.post('/api/submitted_webhook', async(req, res) => {
+    const event = req.body;
 
+    if (event.code === 7002) {
+        console.log('Received webhook event: ', event);
+        const email = event.vendorData;
+
+        const progress_data = await loadProgress(email);
+        console.log("before");
+        console.log(progress_data);
+        if (progress_data) {
+            const currentPage = Number(progress_data.currentPage) + 1;
+            console.log(currentPage);
+            progress_data.currentPage = String(currentPage);
+            console.log("after");
+            console.log(progress_data);
+            await saveProgress(progress_data);
+        }
+
+    }
+
+    res.status(200).send('Webhook received');
+});
 
 app.use((err, req, res, next) =>
 {
