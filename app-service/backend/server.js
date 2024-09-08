@@ -5,7 +5,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const winston = require('winston');
 const { loadProgress, saveProgress} = require('./util')
-
+const { SignalWire } = require('@signalwire/realtime-api'); 
+const { phone } = require("phone");
 const app = express();
 const port = process.env.SERVER_PORT;
 
@@ -13,6 +14,9 @@ const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const GRANT_TYPE = process.env.GRANT_TYPE;
+const SIGNALWIRE_PROJECT_ID = process.env.SIGNALWIRE_PROJECT_ID;
+const SIGNALWIRE_TOKEN = process.env.SIGNALWIRE_TOKEN;
+const SIGNALWIRE_PHONE_NUMBER = process.env.SIGNALWIRE_PHONE_NUMBER;
 
 const logger = winston.createLogger({
     level: 'info',
@@ -248,6 +252,67 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
+
+const data = {requests:[]};
+app.post('/api/request_auth_code', async (req, res) => {
+    try {
+    const min = 123456;
+    const max = 987654;
+    const code = Math.floor(Math.random() * (max - min + 1) + min);
+    const phone_number = req.body.phone.toString();
+
+    // console.log(code);
+
+      const phoneInfo = phone(phone_number);
+      if (!phoneInfo.isValid) return res.status(400).send("Invalid Phone Number");
+      const number = phoneInfo.phoneNumber;
+      data.requests.push({
+        code
+    });
+
+      const message = `Your verification code is ${code}`;
+      const client = await SignalWire({
+        project: SIGNALWIRE_PROJECT_ID,
+        token: SIGNALWIRE_TOKEN,
+      });
+  
+      const messageClient = client.messaging;
+      const sendResult = await messageClient.send({
+        from: SIGNALWIRE_PHONE_NUMBER,  
+        to: number,
+        body: message,
+    
+      });
+  
+      console.log(sendResult);
+      res.status(200).json( 
+        { message: "Your code was sent successfully" }
+    );
+    } catch (error) {
+            console.error('Error:', error.message || error);
+            res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
+app.post('/api/verify_auth_code', async (req, res) => {
+    try {
+        const { code } = req.body; 
+        // console.log(code);
+        const codeInt = parseInt(code);
+        // console.log(codeInt);
+        const requestCount = data.requests.length;
+        data.requests = data.requests.filter((s) => s.code !== codeInt);
+        if (requestCount === data.requests.length) {
+            return res.status(403).send("Invalid or expired code");
+        }
+        res.status(200).json({ message: "Code verified successfully" });
+    } catch (error) {
+        console.error('Error:', error.message || error);
+        res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
+       
 
 app.post('/api/update_filing_status/:id', async (req, res, next) => {
     try {
