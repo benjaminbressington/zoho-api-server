@@ -264,7 +264,7 @@ app.post('/api/request_auth_code', async (req, res) => {
     // console.log(code);
 
       const phoneInfo = phone(phone_number);
-      if (!phoneInfo.isValid) return res.status(400).send("Invalid Phone Number");
+      if (!phoneInfo.isValid) return res.status(400).json({ message: 'Invalid phone number' });
       const number = phoneInfo.phoneNumber;
       data.requests.push({
         code
