@@ -253,59 +253,78 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
     }
 });
 
-const data = {requests:[]};
 app.post('/api/request_auth_code', async (req, res) => {
     try {
-    const min = 123456;
-    const max = 987654;
-    const code = Math.floor(Math.random() * (max - min + 1) + min);
-    const phone_number = req.body.phone.toString();
+        const min = 123456;
+        const max = 987654;
+        const code = Math.floor(Math.random() * (max - min + 1) + min);
+        const phone_number = req.body.phone.toString();
+        const phoneInfo = phone(phone_number);
+        if (!phoneInfo.isValid) {
+            return res.status(400).json({ message: 'Invalid phone number' });
+        }
+        
+        const getPhoneResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification?phone_number=${phone_number}`);
+        if (getPhoneResponse.status === 200 && getPhoneResponse.data && getPhoneResponse.data.phone_number === phone_number) {
+            const Updateresponse=await axios.patch('https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification', {
+                code: code,
+                phone_number: phone_number
 
-    // console.log(code);
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log(`Code updated for phone number ${phone_number}`);
+        } 
+        else {
+            await axios.post('https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification', {
+                phone_number: phone_number,
+                code: code
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log(`Phone number ${phone_number} added with code`);
+        }
+        const number = phoneInfo.phoneNumber;
+        const message = `Your verification code is ${code}`;
+        const client = await SignalWire({
+            project: SIGNALWIRE_PROJECT_ID,
+            token: SIGNALWIRE_TOKEN,
+        });
+        const messageClient = client.messaging;
 
-      const phoneInfo = phone(phone_number);
-      if (!phoneInfo.isValid) return res.status(400).json({ message: 'Invalid phone number' });
-      const number = phoneInfo.phoneNumber;
-      data.requests.push({
-        code
-    });
+        const sendResult = await messageClient.send({
+            from: SIGNALWIRE_PHONE_NUMBER,
+            to: number,
+            body: message,
+        });
 
-      const message = `Your verification code is ${code}`;
-      const client = await SignalWire({
-        project: SIGNALWIRE_PROJECT_ID,
-        token: SIGNALWIRE_TOKEN,
-      });
-  
-      const messageClient = client.messaging;
-      const sendResult = await messageClient.send({
-        from: SIGNALWIRE_PHONE_NUMBER,  
-        to: number,
-        body: message,
-    
-      });
-  
-      console.log(sendResult);
-      res.status(200).json( 
-        { message: "Your code was sent successfully" }
-    );
+ 
+        res.status(200).json({ message: "Your code was sent successfully" });
+
     } catch (error) {
-            console.error('Error:', error.message || error);
-            res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+        console.error('Error:', error.message || error);
+        res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
 app.post('/api/verify_auth_code', async (req, res) => {
     try {
-        const { code } = req.body; 
-        // console.log(code);
+        const { phone_number, code } = req.body;
         const codeInt = parseInt(code);
-        // console.log(codeInt);
-        const requestCount = data.requests.length;
-        data.requests = data.requests.filter((s) => s.code !== codeInt);
-        if (requestCount === data.requests.length) {
-            return res.status(403).send("Invalid or expired code");
+        const getPhoneResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification?phone_number=${phone_number}`);
+        if (getPhoneResponse.status === 200 && getPhoneResponse.data) {
+            const storedPhoneNumber = getPhoneResponse.data.phone_number;
+            const storedCode = parseInt(getPhoneResponse.data.code);
+            if (storedPhoneNumber === phone_number && storedCode === codeInt) {
+                res.status(200).json({ message: "Code verified successfully" });
+            } 
+            else {
+                return res.status(403).json({ message: "Invalid or expired code" });
+            }
+        } 
+        else {
+            return res.status(404).json({ message: "Phone number not found" });
         }
-        res.status(200).json({ message: "Code verified successfully" });
     } catch (error) {
         console.error('Error:', error.message || error);
         res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
