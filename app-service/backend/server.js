@@ -7,7 +7,10 @@ const winston = require('winston');
 const { loadProgress, saveProgress} = require('./util')
 const { SignalWire } = require('@signalwire/realtime-api'); 
 const { phone } = require("phone");
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const app = express();
+const jwt = require('jsonwebtoken');
 const port = process.env.SERVER_PORT;
 
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
@@ -17,7 +20,10 @@ const GRANT_TYPE = process.env.GRANT_TYPE;
 const SIGNALWIRE_PROJECT_ID = process.env.SIGNALWIRE_PROJECT_ID;
 const SIGNALWIRE_TOKEN = process.env.SIGNALWIRE_TOKEN;
 const SIGNALWIRE_PHONE_NUMBER = process.env.SIGNALWIRE_PHONE_NUMBER;
-
+const EMAIL = process.env.EMAIL;
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET;
+const CLIENT_URL = process.env.CLIENT_URL;
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
@@ -331,33 +337,150 @@ app.post('/api/verify_auth_code', async (req, res) => {
     }
 });
 
-       
-
-app.post('/api/update_filing_status/:id', async (req, res, next) => {
+app.post('/api/email_auth', async (req, res) => {
     try {
-        const id = req.params.id;
+        const email = req.body.email;
 
-        if (!req.body.filing_status) {
-            const error = 'Field filing_status is required!';
-            console.log('Error: ', error);
-            return res.status(400).json({ message: error });
-        }
+        let token;
+        let isVerified = 0;
 
-        const postData = { data: [{ 'Tax_Filing_Status': req.body.filing_status || '' }] };
-        const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
-
-        const accessToken = await getToken();
-        const response = await axios.put(dealsUrl, postData, {
-            headers: {
-                'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                'Content-Type': 'application/json'
+        const sendmail = nodemailer.createTransport({
+            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
+            auth: {
+                user: EMAIL,
+                pass: EMAIL_PASSWORD
             }
         });
 
-        res.json(response.data);
+        let emailResponse;
+        try {
+            emailResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/get_email?email=${email}`);
+        } catch (error) {
+            if (error.response.status === 404) {
+                token = jwt.sign({ email: email }, JWT_SECRET, { expiresIn: '30m' });
+                const postResponse = await axios.post(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/email_verification`, {
+                    email: email,
+                    token: token,
+                    isVerified: isVerified
+                });
+
+                if (postResponse.status === 200) {
+                    console.log('New email verification entry created.');
+                }
+                const emailDataNew = {
+                    from: EMAIL,
+                    to: email,
+                    subject: 'Welcome! Please Verify Your Email',
+                    html: `<h1>Email Verification</h1>
+                           <p>Thank you for registering. Please use the following link to verify your email:</p>
+                           <p><a target="_blank" href="${CLIENT_URL}/verification?token=${token}">Verify Email</a></p>
+                           <p><strong>The link will expire in 30 minutes.</strong></p>`
+                };
+
+                await sendmail.sendMail(emailDataNew);
+                return res.status(200).json({ message: 'Verification email sent.' });
+            } else {
+                return res.status(500).json({ message: 'Error occurred while checking email.', error: error.message || error });
+            }
+        }
+        if (emailResponse.data && emailResponse.data.token) {
+            try {
+                jwt.verify(emailResponse.data.token, JWT_SECRET); 
+                return res.status(200).json({ message: 'Email is already sent, please verify it.' });
+            } catch (err) {
+            
+                    try{
+                    token = jwt.sign({ email: email }, JWT_SECRET, { expiresIn: '30m' });
+                    const patchResponse = await axios.patch(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/email_verification`, {
+                        email: email,
+                        token: token,
+                        isVerified: isVerified
+                    });
+
+                    if (patchResponse.status === 200) {
+                        console.log('Email verification token updated.');
+                    }
+                    const emailDataExpired = {
+                        from: EMAIL,
+                        to: email,
+                        subject: 'Your Verification Token Expired - New Token',
+                        html: `<h1>Email Verification</h1>
+                               <p>Your previous verification link has expired. Please use the following link to verify your email:</p>
+                               <p><a target="_blank" href="http://localhost:3000/verification?token=${token}">Verify Email</a></p>
+                               <p><strong>The new link will expire in 30 minutes.</strong></p>`
+                    };
+
+                    await sendmail.sendMail(emailDataExpired);
+                    return res.status(200).json({ message: 'New verification email sent.' });
+                }catch (error) {
+                    return res.status(500).json({ message: 'Invalid token or some other error.' });
+                }
+            }
+        }
     } catch (error) {
         console.error('Error:', error.message || error);
-        res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+        return res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
+app.get('/api/verify_email/:token', async (req, res) => {
+    try {
+        const token = req.params.token;
+        jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+            if (err) {
+                return res.status(400).json({ message: 'Invalid or expired token.' });
+            }
+            const { email } = decoded;
+
+            try {
+                const emailResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/get_email?email=${email}`);
+                
+                if (emailResponse.data && emailResponse.data.isVerified === '1') {
+                    return res.status(200).json({ message: 'Email is already verified.' });
+                } else {
+                    const patchResponse = await axios.patch(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/email_verification`, {
+                        email: email,
+                        isVerified: 1
+                    });
+
+                    if (patchResponse.status === 200) {
+                        return res.status(200).json({ message: 'Email verified successfully.' });
+                    } else {
+                        return res.status(500).json({ message: 'Failed to update verification status.' });
+                    }
+                }
+            } catch (err) {
+                if (err.response && err.response.status === 404) {
+                    return res.status(400).json({ message: 'Email not found.' });
+                }
+                return res.status(500).json({ message: 'An error occurred while verifying the email.', error: err.message });
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error.message || error);
+        res.status(500).json({ message: 'An internal error occurred.', error: error.message });
+    }
+});
+app.post('/api/email_verified_status', async (req, res) => {
+    try {
+        const email = req.body.email;
+        const emailResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/get_email?email=${email}`);
+        if (emailResponse.data && emailResponse.data.isVerified === '1') {
+            return res.status(200).json({ message: 'Email is verified.' });
+        } else {
+            return res.status(200).json({ message: 'Email is not verified.' });
+        }
+    } catch (error) {
+        
+        if (error.response && error.response.status === 404) {
+            return res.status(200).json({ message: 'Email not found.' });
+        }
+        
+        console.error('Error:', error.message || error);
+        return res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
