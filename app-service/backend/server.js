@@ -4,8 +4,8 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const winston = require('winston');
-const { loadProgress, saveProgress} = require('./util')
-const { SignalWire } = require('@signalwire/realtime-api'); 
+const { loadProgress, saveProgress } = require('./util');
+const { SignalWire } = require('@signalwire/realtime-api');
 const { phone } = require("phone");
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
@@ -70,15 +70,19 @@ const getToken = async () =>
     }
 };
 
-app.post('/api/insert_deal', async (req, res, next) => {
-    try {
+app.post('/api/insert_deal', async (req, res, next) =>
+{
+    try
+    {
         console.log(req.body);
 
         const body = req.body;
         const requiredKeys = ['clientName', 'email', 'firstName', 'lastName', 'phone', 'estimated_value'];
 
-        for (const key of requiredKeys) {
-            if (!body[key]) {
+        for (const key of requiredKeys)
+        {
+            if (!body[key])
+            {
                 const error = `Field ${key} is required!`;
                 console.log('Error: ', error);
                 return res.status(400).json({ message: error });
@@ -99,6 +103,7 @@ app.post('/api/insert_deal', async (req, res, next) => {
                 'S1_Q1_Selfemployed': body.s1Q1?.toString() || '',
                 'S1_Q2_Filed1040_tax': body.s1Q2?.toString() || '',
                 'S1_Q3_Affected': body.s1Q3?.toString() || '',
+                'S1_Q4_Owe_IRS_Money': body.s1Q4?.toString() || '',
                 'Estimated_Value': body.estimated_value?.toString() || '',
                 'Pick_List_1': 'Ankur List',
                 'Resume_URL': body.resume_url || 'https://app.automatedtaxcredits.com/estimator'
@@ -118,14 +123,17 @@ app.post('/api/insert_deal', async (req, res, next) => {
 
         console.log(response.data.data);
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/update_record/:id', async (req, res, next) => {
-    try {
+app.post('/api/update_record/:id', async (req, res, next) =>
+{
+    try
+    {
         console.log(req.body);
         const id = req.params.id;
         const requiredFields = [
@@ -133,8 +141,10 @@ app.post('/api/update_record/:id', async (req, res, next) => {
             'firstName', 'lastName', 'phone', 'state', 'streetAddress', 'zipCode'
         ];
 
-        for (const key of requiredFields) {
-            if (!req.body[key]) {
+        for (const key of requiredFields)
+        {
+            if (!req.body[key])
+            {
                 const error = `Field ${key} is required!`;
                 console.log('Error: ', error);
                 return res.status(400).json({ message: error });
@@ -225,17 +235,21 @@ app.post('/api/update_record/:id', async (req, res, next) => {
         });
 
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/update_stage/:id', async (req, res, next) => {
-    try {
+app.post('/api/update_stage/:id', async (req, res, next) =>
+{
+    try
+    {
         const id = req.params.id;
 
-        if (!req.body.stage) {
+        if (!req.body.stage)
+        {
             const error = 'Field stage is required!';
             console.log('Error: ', error);
             return res.status(400).json({ message: error });
@@ -253,26 +267,31 @@ app.post('/api/update_stage/:id', async (req, res, next) => {
         });
 
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/request_auth_code', async (req, res) => {
-    try {
+app.post('/api/request_auth_code', async (req, res) =>
+{
+    try
+    {
         const min = 123456;
         const max = 987654;
         const code = Math.floor(Math.random() * (max - min + 1) + min);
         const phone_number = req.body.phone.toString();
         const phoneInfo = phone(phone_number);
-        if (!phoneInfo.isValid) {
+        if (!phoneInfo.isValid)
+        {
             return res.status(400).json({ message: 'Invalid phone number' });
         }
-        
+
         const getPhoneResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification?phone_number=${phone_number}`);
-        if (getPhoneResponse.status === 200 && getPhoneResponse.data && getPhoneResponse.data.phone_number === phone_number) {
-            const Updateresponse=await axios.patch('https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification', {
+        if (getPhoneResponse.status === 200 && getPhoneResponse.data && getPhoneResponse.data.phone_number === phone_number)
+        {
+            const Updateresponse = await axios.patch('https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification', {
                 code: code,
                 phone_number: phone_number
 
@@ -280,8 +299,9 @@ app.post('/api/request_auth_code', async (req, res) => {
                 headers: { 'Content-Type': 'application/json' }
             });
             console.log(`Code updated for phone number ${phone_number}`);
-        } 
-        else {
+        }
+        else
+        {
             await axios.post('https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification', {
                 phone_number: phone_number,
                 code: code
@@ -304,41 +324,51 @@ app.post('/api/request_auth_code', async (req, res) => {
             body: message,
         });
 
- 
+
         res.status(200).json({ message: "Your code was sent successfully" });
 
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/verify_auth_code', async (req, res) => {
-    try {
+app.post('/api/verify_auth_code', async (req, res) =>
+{
+    try
+    {
         const { phone_number, code } = req.body;
         const codeInt = parseInt(code);
         const getPhoneResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/phone_verification?phone_number=${phone_number}`);
-        if (getPhoneResponse.status === 200 && getPhoneResponse.data) {
+        if (getPhoneResponse.status === 200 && getPhoneResponse.data)
+        {
             const storedPhoneNumber = getPhoneResponse.data.phone_number;
             const storedCode = parseInt(getPhoneResponse.data.code);
-            if (storedPhoneNumber === phone_number && storedCode === codeInt) {
+            if (storedPhoneNumber === phone_number && storedCode === codeInt)
+            {
                 res.status(200).json({ message: "Code verified successfully" });
-            } 
-            else {
+            }
+            else
+            {
                 return res.status(403).json({ message: "Invalid or expired code" });
             }
-        } 
-        else {
+        }
+        else
+        {
             return res.status(404).json({ message: "Phone number not found" });
         }
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/email_auth', async (req, res) => {
-    try {
+app.post('/api/email_auth', async (req, res) =>
+{
+    try
+    {
         const email = req.body.email;
 
         let token;
@@ -356,10 +386,13 @@ app.post('/api/email_auth', async (req, res) => {
         });
 
         let emailResponse;
-        try {
+        try
+        {
             emailResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/get_email?email=${email}`);
-        } catch (error) {
-            if (error.response.status === 404) {
+        } catch (error)
+        {
+            if (error.response.status === 404)
+            {
                 token = jwt.sign({ email: email }, JWT_SECRET, { expiresIn: '30m' });
                 const postResponse = await axios.post(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/email_verification`, {
                     email: email,
@@ -367,7 +400,8 @@ app.post('/api/email_auth', async (req, res) => {
                     isVerified: isVerified
                 });
 
-                if (postResponse.status === 200) {
+                if (postResponse.status === 200)
+                {
                     console.log('New email verification entry created.');
                 }
                 const emailDataNew = {
@@ -382,17 +416,22 @@ app.post('/api/email_auth', async (req, res) => {
 
                 await sendmail.sendMail(emailDataNew);
                 return res.status(200).json({ message: 'Verification email sent.' });
-            } else {
+            } else
+            {
                 return res.status(500).json({ message: 'Error occurred while checking email.', error: error.message || error });
             }
         }
-        if (emailResponse.data && emailResponse.data.token) {
-            try {
-                jwt.verify(emailResponse.data.token, JWT_SECRET); 
+        if (emailResponse.data && emailResponse.data.token)
+        {
+            try
+            {
+                jwt.verify(emailResponse.data.token, JWT_SECRET);
                 return res.status(200).json({ message: 'Email is already sent, please verify it.' });
-            } catch (err) {
-            
-                    try{
+            } catch (err)
+            {
+
+                try
+                {
                     token = jwt.sign({ email: email }, JWT_SECRET, { expiresIn: '30m' });
                     const patchResponse = await axios.patch(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/email_verification`, {
                         email: email,
@@ -400,7 +439,8 @@ app.post('/api/email_auth', async (req, res) => {
                         isVerified: isVerified
                     });
 
-                    if (patchResponse.status === 200) {
+                    if (patchResponse.status === 200)
+                    {
                         console.log('Email verification token updated.');
                     }
                     const emailDataExpired = {
@@ -415,80 +455,103 @@ app.post('/api/email_auth', async (req, res) => {
 
                     await sendmail.sendMail(emailDataExpired);
                     return res.status(200).json({ message: 'New verification email sent.' });
-                }catch (error) {
+                } catch (error)
+                {
                     return res.status(500).json({ message: 'Invalid token or some other error.' });
                 }
             }
         }
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         return res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.get('/api/verify_email/:token', async (req, res) => {
-    try {
+app.get('/api/verify_email/:token', async (req, res) =>
+{
+    try
+    {
         const token = req.params.token;
-        jwt.verify(token, JWT_SECRET, async (err, decoded) => {
-            if (err) {
+        jwt.verify(token, JWT_SECRET, async (err, decoded) =>
+        {
+            if (err)
+            {
                 return res.status(400).json({ message: 'Invalid or expired token.' });
             }
             const { email } = decoded;
 
-            try {
+            try
+            {
                 const emailResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/get_email?email=${email}`);
-                
-                if (emailResponse.data && emailResponse.data.isVerified === '1') {
+
+                if (emailResponse.data && emailResponse.data.isVerified === '1')
+                {
                     return res.status(200).json({ message: 'Email is already verified.' });
-                } else {
+                } else
+                {
                     const patchResponse = await axios.patch(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/email_verification`, {
                         email: email,
                         isVerified: 1
                     });
 
-                    if (patchResponse.status === 200) {
+                    if (patchResponse.status === 200)
+                    {
                         return res.status(200).json({ message: 'Email verified successfully.' });
-                    } else {
+                    } else
+                    {
                         return res.status(500).json({ message: 'Failed to update verification status.' });
                     }
                 }
-            } catch (err) {
-                if (err.response && err.response.status === 404) {
+            } catch (err)
+            {
+                if (err.response && err.response.status === 404)
+                {
                     return res.status(400).json({ message: 'Email not found.' });
                 }
                 return res.status(500).json({ message: 'An error occurred while verifying the email.', error: err.message });
             }
         });
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(500).json({ message: 'An internal error occurred.', error: error.message });
     }
 });
-app.post('/api/email_verified_status', async (req, res) => {
-    try {
+app.post('/api/email_verified_status', async (req, res) =>
+{
+    try
+    {
         const email = req.body.email;
         const emailResponse = await axios.get(`https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/get_email?email=${email}`);
-        if (emailResponse.data && emailResponse.data.isVerified === '1') {
+        if (emailResponse.data && emailResponse.data.isVerified === '1')
+        {
             return res.status(200).json({ message: 'Email is verified.' });
-        } else {
+        } else
+        {
             return res.status(200).json({ message: 'Email is not verified.' });
         }
-    } catch (error) {
-        
-        if (error.response && error.response.status === 404) {
+    } catch (error)
+    {
+
+        if (error.response && error.response.status === 404)
+        {
             return res.status(200).json({ message: 'Email not found.' });
         }
-        
+
         console.error('Error:', error.message || error);
         return res.status(500).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/update_ssn/:id', async (req, res, next) => {
-    try {
+app.post('/api/update_ssn/:id', async (req, res, next) =>
+{
+    try
+    {
         const id = req.params.id;
 
-        if (!req.body.ssn) {
+        if (!req.body.ssn)
+        {
             const error = 'Field ssn is required!';
             console.log('Error: ', error);
             return res.status(400).json({ message: error });
@@ -506,20 +569,23 @@ app.post('/api/update_ssn/:id', async (req, res, next) => {
         });
 
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/update_amount/:id', async (req, res, next) => {
-    try {
+app.post('/api/update_amount/:id', async (req, res, next) =>
+{
+    try
+    {
         const id = req.params.id;
 
         const body = req.body;
         console.log(body);
 
-        const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || '0', 'Calculated_PDF': req.body.pdf_21 || '', 'Calculation_Date': req.body.calculation_date}] };
+        const postData = { data: [{ 'Amount': req.body.amount || 0, 'IRS_Balance': req.body.irs_bal || '0', 'Calculated_PDF': req.body.pdf_21 || '', 'Calculation_Date': req.body.calculation_date }] };
         const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
 
         const accessToken = await getToken();
@@ -531,14 +597,17 @@ app.post('/api/update_amount/:id', async (req, res, next) => {
         });
 
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.get('/api/get_record/:id', async (req, res, next) => {
-    try {
+app.get('/api/get_record/:id', async (req, res, next) =>
+{
+    try
+    {
         console.log(req.body);
         const id = req.params.id;
 
@@ -552,7 +621,8 @@ app.get('/api/get_record/:id', async (req, res, next) => {
         });
 
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
@@ -561,8 +631,10 @@ app.get('/api/get_record/:id', async (req, res, next) => {
 
 
 
-app.post('/api/update_existing/:id', async (req, res, next) => {
-    try {
+app.post('/api/update_existing/:id', async (req, res, next) =>
+{
+    try
+    {
         const id = req.params.id;
         console.log(req.body);
 
@@ -571,8 +643,10 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
             'refereallURL'
         ];
 
-        for (const key of requiredFields) {
-            if (!req.body[key]) {
+        for (const key of requiredFields)
+        {
+            if (!req.body[key])
+            {
                 const error = `Field ${key} is required!`;
                 console.log('Error: ', error);
                 return res.status(400).json({ message: error });
@@ -592,6 +666,7 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
                 'S1_Q1_Selfemployed': req.body.s1Q1?.toString() || '',
                 'S1_Q2_Filed1040_tax': req.body.s1Q2?.toString() || '',
                 'S1_Q3_Affected': req.body.s1Q3?.toString() || '',
+                'S1_Q4_Owe_IRS_Money': req.body.s1Q4?.toString() || '',
             }]
         };
 
@@ -605,23 +680,27 @@ app.post('/api/update_existing/:id', async (req, res, next) => {
         });
 
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
-app.post('/api/submitted_webhook', async(req, res) => {
+app.post('/api/submitted_webhook', async (req, res) =>
+{
     const event = req.body;
 
-    if (event.code === 7002) {
+    if (event.code === 7002)
+    {
         console.log('Received webhook event: ', event);
         const email = event.vendorData;
 
         const progress_data = await loadProgress(email);
         console.log("before");
         console.log(progress_data);
-        if (progress_data) {
+        if (progress_data)
+        {
             const currentPage = Number(progress_data.currentPage) + 1;
             console.log(currentPage);
             progress_data.currentPage = String(currentPage);
