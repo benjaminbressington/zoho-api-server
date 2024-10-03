@@ -714,6 +714,62 @@ app.post('/api/submitted_webhook', async (req, res) =>
     res.status(200).send('Webhook received');
 });
 
+app.post('/api/insert_tax_intake', async (req, res, next) => {
+    try {
+        console.log(req.body);
+
+        const body = req.body;
+
+        const requiredKeys = ['TaxType', 'PaymentPlan', 'IssueReason', 'Zipcode', 'State', 'County', 'UnfiledReturn', 'IrsOwe', 'ProtectAssets', 'ContactReason', 'FirstName', 'LastName', 'Email', 'Phone'];
+
+        for (const key of requiredKeys) {
+            if (!body[key]) {
+                const error = `Field ${key} is required!`;
+                console.log('Error: ', error);
+                return res.status(400).json({ message: error });
+            }
+        }
+
+        const postData = {
+            data: [{
+                'Deal_Name': body.FirstName + ' ' + body.LastName,
+                'Stage': 'Intake',
+                'TaxType': body.TaxType,
+                'PaymentPlan': body.PaymentPlan,
+                'IssueReason': body.IssueReason.join(', '),
+                'Zip_Code': body.Zipcode,
+                'State': body.State,
+                'County': body.County,
+                'UnfiledReturn': body.UnfiledReturn,
+                'IrsOweTaxIntake': body.IrsOwe,
+                'ProtectAssets': body.ProtectAssets,
+                'ContactReason': body.ContactReason.join(', '),
+                'First_Name': body.FirstName,
+                'Last_Name': body.LastName,
+                'Email': body.Email,
+                'Phone': body.Phone
+            }],
+            trigger: ['approval', 'workflow', 'blueprint']
+        };
+
+        const dealsUrl = "https://www.zohoapis.com/crm/v2/Deals";
+        const accessToken = await getToken();
+
+        const response = await axios.post(dealsUrl, postData, {
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(response.data.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error:', error.message || error);
+        res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
 app.use((err, req, res, next) =>
 {
     logger.error('An error occurred:', err);
