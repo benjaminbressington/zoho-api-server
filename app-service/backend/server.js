@@ -732,6 +732,9 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
 
         const postData = {
             data: [{
+                "Layout": {
+                    "id": "6172076000005310001"
+                },
                 'Deal_Name': body.FirstName + ' ' + body.LastName,
                 'Stage': 'Intake',
                 'TaxType': body.TaxType,
