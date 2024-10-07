@@ -4,7 +4,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const winston = require('winston');
-const { loadProgress, saveProgress } = require('./util');
+const { loadProgress, saveProgress, sendEmail } = require('./util');
 const { SignalWire } = require('@signalwire/realtime-api');
 const { phone } = require("phone");
 const nodemailer = require('nodemailer');
@@ -772,6 +772,17 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
+
+app.post('/api/send_mail', async (req, res) => {
+    const { to, subject, text } = req.body;
+    console.log(to, subject, text);
+    try {
+      const result = await sendEmail(to, subject, text);
+      res.status(200).json({ success: true, result });
+    } catch (error) {
+      res.status(422).json({ success: false, message: 'Failed to send email', error });
+    }
+  });
 
 app.use((err, req, res, next) =>
 {
