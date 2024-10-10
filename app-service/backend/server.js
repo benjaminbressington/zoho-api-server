@@ -750,7 +750,8 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
                 'First_Name': body.FirstName,
                 'Last_Name': body.LastName,
                 'Email': body.Email,
-                'Phone': body.Phone
+                'Phone': body.Phone,
+                'Mobile': body.Phone,
             }],
             trigger: ['approval', 'workflow', 'blueprint']
         };
@@ -772,6 +773,44 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
+
+app.post('/api/update_tax_stage/:id', async (req, res, next) =>
+    {
+        try
+        {
+            const id = req.params.id;
+    
+            if (!req.body.stage)
+            {
+                const error = 'Field stage is required!';
+                console.log('Error: ', error);
+                return res.status(400).json({ message: error });
+            }
+    
+            const postData = { data: [{
+                "Layout": {
+                "id": "6172076000005310001"
+            }, 
+            'Stage': req.body.stage || '' 
+            }] 
+    };
+            const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+    
+            const accessToken = await getToken();
+            const response = await axios.put(dealsUrl, postData, {
+                headers: {
+                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            res.json(response.data);
+        } catch (error)
+        {
+            console.error('Error:', error.message || error);
+            res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+        }
+    });
 
 app.post('/api/send_mail', async (req, res) => {
     const { to, subject, text } = req.body;
