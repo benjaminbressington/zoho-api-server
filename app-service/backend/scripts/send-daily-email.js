@@ -32,7 +32,7 @@ const sendDailyEmail = async (to) => {
     }
 };
 
-cron.schedule('*/2 * * * *', () => {
-    sendDailyEmail('uzairabid222@gmail.com');
-    console.log("Email sent every 2 minutes for testing");
+cron.schedule('0 9 * * *', () => {
+    sendDailyEmail('ben@automateboring.net');
+    console.log("Daily email scheduled at 8 AM");
 });
