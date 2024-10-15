@@ -741,7 +741,7 @@ app.post('/api/insert_tax_intake', async (req, res, next) =>
                 },
                 'Deal_Name': body.FirstName + ' ' + body.LastName,
                 'Stage': 'Intake',
-                'Lead_Source': body.Source || 'Home',
+                'Lead_Source': body.LeadSource || 'Home',
                 'TaxType': body.TaxType,
                 'PaymentPlan': body.PaymentPlan,
                 'IssueReason': body.IssueReason.join(', '),
