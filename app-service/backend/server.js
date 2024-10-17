@@ -714,16 +714,20 @@ app.post('/api/submitted_webhook', async (req, res) =>
     res.status(200).send('Webhook received');
 });
 
-app.post('/api/insert_tax_intake', async (req, res, next) => {
-    try {
+app.post('/api/insert_tax_intake', async (req, res, next) =>
+{
+    try
+    {
         console.log(req.body);
 
         const body = req.body;
 
         const requiredKeys = ['TaxType', 'PaymentPlan', 'IssueReason', 'Zipcode', 'State', 'County', 'UnfiledReturn', 'IrsOwe', 'ProtectAssets', 'ContactReason', 'FirstName', 'LastName', 'Email', 'Phone'];
 
-        for (const key of requiredKeys) {
-            if (!body[key]) {
+        for (const key of requiredKeys)
+        {
+            if (!body[key])
+            {
                 const error = `Field ${key} is required!`;
                 console.log('Error: ', error);
                 return res.status(400).json({ message: error });
@@ -759,6 +763,7 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
                 },
                 'Deal_Name': body.FirstName + ' ' + body.LastName,
                 'Stage': 'Intake',
+                'Lead_Source': body.LeadSource || 'Home',
                 'TaxType': body.TaxType,
                 'PaymentPlan': body.PaymentPlan,
                 'IssueReason': body.IssueReason.join(', '),
@@ -795,60 +800,65 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
 
         console.log(response.data.data);
         res.json(response.data);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error:', error.message || error);
         res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
     }
 });
 
 app.post('/api/update_tax_stage/:id', async (req, res, next) =>
+{
+    try
     {
-        try
-        {
-            const id = req.params.id;
-    
-            if (!req.body.stage)
-            {
-                const error = 'Field stage is required!';
-                console.log('Error: ', error);
-                return res.status(400).json({ message: error });
-            }
-    
-            const postData = { data: [{
-                "Layout": {
-                "id": "6172076000005310001"
-            }, 
-            'Stage': req.body.stage || '' 
-            }] 
-    };
-            const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
-    
-            const accessToken = await getToken();
-            const response = await axios.put(dealsUrl, postData, {
-                headers: {
-                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-    
-            res.json(response.data);
-        } catch (error)
-        {
-            console.error('Error:', error.message || error);
-            res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
-        }
-    });
+        const id = req.params.id;
 
-app.post('/api/send_mail', async (req, res) => {
+        if (!req.body.stage)
+        {
+            const error = 'Field stage is required!';
+            console.log('Error: ', error);
+            return res.status(400).json({ message: error });
+        }
+
+        const postData = {
+            data: [{
+                "Layout": {
+                    "id": "6172076000005310001"
+                },
+                'Stage': req.body.stage || ''
+            }]
+        };
+        const dealsUrl = `https://www.zohoapis.com/crm/v2/Deals/${id}`;
+
+        const accessToken = await getToken();
+        const response = await axios.put(dealsUrl, postData, {
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        res.json(response.data);
+    } catch (error)
+    {
+        console.error('Error:', error.message || error);
+        res.status(442).json({ message: 'An error occurred while processing the request.', error: error.message || error });
+    }
+});
+
+app.post('/api/send_mail', async (req, res) =>
+{
     const { to, subject, text } = req.body;
     console.log(to, subject, text);
-    try {
-      const result = await sendEmail(to, subject, text);
-      res.status(200).json({ success: true, result });
-    } catch (error) {
-      res.status(422).json({ success: false, message: 'Failed to send email', error });
+    try
+    {
+        const result = await sendEmail(to, subject, text);
+        res.status(200).json({ success: true, result });
+    } catch (error)
+    {
+        res.status(422).json({ success: false, message: 'Failed to send email', error });
     }
-  });
+});
 
 app.use((err, req, res, next) =>
 {
