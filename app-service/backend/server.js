@@ -730,6 +730,28 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
             }
         }
 
+        let irsOweOne = 'No', irsOweTwo = 'No', irsOweThree = 'No', irsOweFour = 'No', irsOweFive = 'No';
+
+        if (body.IrsOwe == '$5,000 or Less') {
+            irsOweOne = 'Yes'; 
+        }
+
+        if (body.IrsOwe == '$5,001 - $10,000') {
+            irsOweTwo = 'Yes'; 
+        }
+
+        if (body.IrsOwe == '$10,001 - $50,000') {
+            irsOweThree = 'Yes';
+        }
+
+        if (body.IrsOwe == '$50,001 - $100,000') {
+            irsOweFour = 'Yes';
+        }
+
+        if (body.IrsOwe == '$100,001 or More') {
+            irsOweFive = 'Yes';
+        }
+
         const postData = {
             data: [{
                 "Layout": {
@@ -752,6 +774,11 @@ app.post('/api/insert_tax_intake', async (req, res, next) => {
                 'Email': body.Email,
                 'Phone': body.Phone,
                 'Mobile': body.Phone,
+                'IrsOweTax1': irsOweOne,
+                'IrsOweTax2': irsOweTwo,
+                'IrsOweTax3': irsOweThree,
+                'IrsOweTax4': irsOweFour,
+                'IrsOweTax5': irsOweFive,
             }],
             trigger: ['approval', 'workflow', 'blueprint']
         };
