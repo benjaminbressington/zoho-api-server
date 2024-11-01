@@ -909,14 +909,14 @@ app.post('/api/save_to_xano', async (req, res) =>
         const responseId = data.id;
         const mappedData = {};
         const status = (event === 'responseFinished') ? 'Completed' : 'Not Completed';
-        const email = data?.data['qct74o2jtj39q7vcbn33pe8e'].join('') || '';
+        const email = data?.data['qct74o2jtj39q7vcbn33pe8e']?.join('') || '';
 
         console.log('email', email);
 
         for (let [key, value] of Object.entries(data.data)) {
             if (questionsMapping[key]) {
                 if (typeof(value) == 'object') {
-                    value = value.join('');
+                    value = value?.join('') || value;
                 }
                 mappedData[questionsMapping[key]] = value;
             }
