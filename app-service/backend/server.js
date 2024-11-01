@@ -905,10 +905,13 @@ app.post('/api/save_to_xano', async (req, res) =>
 
     try {
         const { webhookId, event, data } = req.body;
+        console.log('body',req.body);
         const responseId = data.id;
         const mappedData = {};
         const status = (event === 'responseFinished') ? 'Completed' : 'Not Completed';
         const email = data?.data['qct74o2jtj39q7vcbn33pe8e'].join('') || '';
+
+        console.log('email', email);
 
         for (let [key, value] of Object.entries(data.data)) {
             if (questionsMapping[key]) {
@@ -919,12 +922,16 @@ app.post('/api/save_to_xano', async (req, res) =>
             }
         }
 
+        console.log('mapped data',mappedData);
+
         const payload = {
             response_id: responseId,
             data: mappedData,
             status,
             email
         };
+
+        console.log(payload, 'payload');
 
         const xanoUrl = (event === 'responseCreated') ?
             'https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/formbricks_intake' :
@@ -935,6 +942,8 @@ app.post('/api/save_to_xano', async (req, res) =>
             url: xanoUrl,
             data: payload
         });
+
+        console.log('response', xanoResponse);
 
         res.status(200).json({ success: true, result: xanoResponse.data });
     } catch (error) {
