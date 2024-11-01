@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const winston = require('winston');
 const { loadProgress, saveProgress, sendEmail } = require('./util');
+const _ = require('lodash');
 const { SignalWire } = require('@signalwire/realtime-api');
 const { phone } = require("phone");
 const nodemailer = require('nodemailer');
@@ -846,17 +847,98 @@ app.post('/api/update_tax_stage/:id', async (req, res, next) =>
     }
 });
 
-app.post('/api/send_mail', async (req, res) =>
+app.post('/api/save_to_xano', async (req, res) =>
 {
-    const { to, subject, text } = req.body;
-    console.log(to, subject, text);
-    try
-    {
-        const result = await sendEmail(to, subject, text);
-        res.status(200).json({ success: true, result });
-    } catch (error)
-    {
-        res.status(422).json({ success: false, message: 'Failed to send email', error });
+    const questionsMapping = {
+        'nnleehyeo0nh0vifjff340n6': 'form1040_941',
+        'rcjkozs0hbnu8ekr4hzl2qgz': 'tax_year',
+        'olgyfcitw0owjrysnajiqki2': 'first_name',
+        'w6zc5hjj1im20itz1iuzkhw6': 'last_name',
+        'yw3flp5r5fkv7s19gjpjm7yx': 'ssn',
+        'ilihpb23ve30ygkcvijrk2w6': 'joint_file',
+        'umj174r9caalpf660a8mqalm': 'spouse_fname',
+        'pfd3p6ijrdy9vdoobra7pb2h': 'spouse_lname',
+        'ubhhlicxe4vvqy607v5u32fq': 'spouse_ssn',
+        'l1l2vnrzue77sq8c1fdp4xgv': 'change_address',
+        'm4camqsrnh2gxbh4zdiy3tt0': 'current_address',
+        'o51xjlkitsphwvjb24yxtxud': 'apartment_number',
+        'm1pko0zr79m9f8p2z9og8wcm': 'city_town_state_zip',
+        'nfh7bb3awxit6dq5nlf2xbey': 'foreign_address',
+        'qsl2hjwtmh7rszeifx4bxz2u': 'foreign_country_name',
+        'ndi6bnkgjfhf2kgoa38n02n4': 'foreign_country_state',
+        'b1lndcelq65hxojhdqs58uiw': 'foreign_postal_code',
+        'c0fvxnzsxco87sfo5tblecum': 'new_address_last_tax_return',
+        'lfwjm9l8huuvwteyhgcfp23k': 'home_phone_no',
+        'a1rh2ubr6f5q9yeaez1qm2dn': 'home_best_time_to_reach',
+        'y2vpxs4xnyn97hjmrktz7jn7': 'work_phone_no',
+        'erfb7eh0yr1cvcyehwrx550h': 'work_best_time_to_reach',
+        'sl5td7kw5wlavkzwkvje2vk4': 'total_number_owe_irs',
+        'um8yusaqrlvjp43ncllaayti': 'amount_of_payment_request',
+        'q9ewkb4r27rotu9jasqvbxat': 'dollar_amount_of_payment_request',
+        'rug58xfpalxvuhto3vsdjfon': 'date_for_payment_each_month',
+        'vo9niss9lq6fclib6kb0f7pv': 'direct_debit_payment_every_month',
+        'imt1svzpxubdue5m9l8ii7wr': 'checking_account_routing_number',
+        'sqhfntswgp9ttns41168avdy': 'checking_account_number',
+        'io27hnl1stklxgxj3iyqzlvl': 'low_income_taxpayer',
+        'ljvrh1g2f27ojav1ygv6bv3d': 'deduct_payments_from_payroll',
+        'f4akcmfnlet8n4yzvry0p4c3': 'install_agreement',
+        'iwy3kr93h5ci962bxlqvpe8w': 'primary_country_residence',
+        'lqnqdz600j0jkj1x2wxcqe8d': 'marital_status',
+        'cs2vrkoi3iiexpg99yed7hzy': 'share_household_expense_with_spouse',
+        'rvk9oc4b5ug01ifpbahmwntm': 'spouse_earn_income',
+        'vi25888rgg70vies97tn9ynn': 'how_often_spouse_paid',
+        'o801oyndhg22dcbahg2apci1': 'spouse_income_per_pay_period',
+        'igovxetlf2xk85clrhoyafis': 'dependents_claiming_this_year',
+        'vcamnqa46u4pn348eep9jerj': 'people_65_older',
+        'xzalodr5w9tlrhjxbctvkl23': 'often_paid',
+        'o7jc7iwt2wyebackl1tvcpus': 'vehicles_own',
+        'tk41gzu1pqww9jk9pwqj8gjm': 'car_payments_each_month',
+        'w0bi6xs0lypmg56uxr7clzkq': 'health_insurance',
+        'bse5lrwmg05toqckkgyliz0d': 'health_insurance_dedcuted_from_paycheck',
+        'krk25zc4pm5msr18tfq6qmwg': 'monthly_health_insurance_premiums',
+        'z8xg4uzkqlcl5vuro4lxtoio': 'court_ordered_payments',
+        'yk87ihi1o2z3az72350m753u': 'court_ordered_payments_dedcuted_from_paycheck',
+        'ryvfjvh19q8xt7cat5pvlemt': 'monthly_court_ordered_payments',
+        'sbsyroe2ac7s1zxg8hxnnyvb': 'how_much_pay_for_child_dependent_each_month',
+        'qct74o2jtj39q7vcbn33pe8e': 'email'
+    }
+
+    try {
+        const { webhookId, event, data } = req.body;
+        const responseId = data.id;
+        const mappedData = {};
+        const status = (event === 'responseFinished') ? 'Completed' : 'Not Completed';
+        const email = data?.data['qct74o2jtj39q7vcbn33pe8e'].join('') || '';
+
+        for (let [key, value] of Object.entries(data.data)) {
+            if (questionsMapping[key]) {
+                if (typeof(value) == 'object') {
+                    value = value.join('');
+                }
+                mappedData[questionsMapping[key]] = value;
+            }
+        }
+
+        const payload = {
+            response_id: responseId,
+            data: mappedData,
+            status,
+            email
+        };
+
+        const xanoUrl = (event === 'responseCreated') ?
+            'https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/formbricks_intake' :
+            `https://xyrm-sqqj-hx6t.n7c.xano.io/api:wFpE3Mgi/formbricks_intake/${responseId}`;
+            
+        const xanoResponse = await axios({
+            method: (event === 'responseCreated') ? 'POST' : 'PATCH',
+            url: xanoUrl,
+            data: payload
+        });
+
+        res.status(200).json({ success: true, result: xanoResponse.data });
+    } catch (error) {
+        res.status(422).json({ success: false, message: 'Failed to save to Xano', error: error.message });
     }
 });
 
